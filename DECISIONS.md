@@ -110,3 +110,21 @@ Choices made while building this project, and why. Newest at the bottom.
   128 on the M4 Pro.
 - **Checkpoint selection by validation rollouts** on seeds 50000+, never the
   final evaluation seeds.
+
+## Training run and evaluation
+- **Run:** 200 demos (190 train / 10 held out for loss), 30k steps, batch
+  128, AdamW lr 3e-4 with one-cycle schedule. 30.2 min on MPS (~17 steps/s
+  including rollouts). Validation rollout success (20 episodes, seeds 50000+):
+  85% @5k, 90% @10k, 100% @15k/20k/25k, 90% @30k.
+- **Checkpoint used for the final evaluation: step 25,000.** Selected by best
+  validation success, ties going to the later step. Not the last (30k)
+  checkpoint, which scored lower on validation (it's kept as
+  `checkpoints/bc_policy_last.pt`).
+- **Final evaluation (seeds 0–49):** scripted 50/50 (100%), behavior cloning
+  46/50 (92%, 95% Wilson CI 81–97%). All 4 BC failures were "never lifted the
+  cube": a misaligned grasp, then hovering without retrying. 3 of the 4
+  had the cube at the inner spawn radius (0.15–0.16 m); too few cases to be sure.
+- **No retraining or tuning after the evaluation**, so the 92% is an honest
+  held-out number. Likely improvements, untried: more demos near the
+  workspace edges, demos that include re-grasp attempts, or a larger image
+  resolution for the wrist camera.
