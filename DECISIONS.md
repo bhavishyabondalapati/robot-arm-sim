@@ -86,3 +86,27 @@ Choices made while building this project, and why. Newest at the bottom.
   evaluation 0–49, so the final evaluation uses cube poses never seen in training.
 - **Episodes are 200 steps (10 s)**; the expert finishes at 8 s and then holds
   still, so the policy also learns to stop.
+
+## Behavior-cloning policy
+- **Inputs: both camera images + joint angles. Output: the next 10 joint-target
+  actions** (an "action chunk", from ACT). Chunks average out the jerky,
+  multi-modal moments (e.g. *exactly* when to close the gripper) and reduce
+  compounding error. At run time, all chunk predictions covering the current
+  step are averaged with weights exp(−0.1·i) ("temporal ensembling").
+- **Small CNN + spatial softmax per camera (~0.6M parameters total)** rather
+  than a pretrained ResNet-18 (11M). Spatial softmax outputs keypoint
+  coordinates, which suits "where is the cube" tasks and learns fast from a few
+  hundred demos. It trains in minutes on the M4 Pro.
+- **Absolute joint targets, normalized** by dataset mean/std (stored inside the
+  checkpoint so inference can't use the wrong statistics).
+- **L1 loss** (as in ACT): less sensitive to occasional large errors than MSE
+  and gives sharper action predictions.
+- **Augmentation: random ±4 px image shifts** (DrQ-v2). Cheap, and the standard
+  fix for image policies overfitting small datasets.
+- **No time/phase input**: the policy must work out "where am I in the task"
+  from the images and gripper state, like it would on a real robot.
+- **Device: MPS (Apple GPU)**, CPU fallback. The whole dataset is kept on the
+  device as uint8, so no DataLoader is needed. Smoke test: ~20 steps/s at batch
+  128 on the M4 Pro.
+- **Checkpoint selection by validation rollouts** on seeds 50000+, never the
+  final evaluation seeds.
