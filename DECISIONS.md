@@ -65,3 +65,24 @@ Choices made while building this project, and why. Newest at the bottom.
 - **Open-loop expert using the true cube pose.** It does not see pixels and does
   not react to slips. Result: **100/100** successes on seeds 0–99 (8 s per
   episode). It is the upper bound the learned policy is compared against.
+
+## Demonstrations
+- **What is recorded per step**: measured joint positions (6), front + wrist
+  camera images (96×96 RGB, uint8), and the expert's commanded joint targets
+  (6) as the action label. Stored as one compressed `.npz` per episode in
+  `data/demos/` (git-ignored, ~1 MB per episode).
+- **96×96 images**: big enough that the 3 cm cube is several pixels wide in the
+  front view; small enough to keep 200 demos × 200 steps × 2 cameras (~2 GB)
+  in GPU memory during training.
+- **Both cameras**: the front camera gives the global layout (where is the
+  cube?), the wrist camera gives a close-up for the final alignment and the
+  cube's yaw. This mirrors the usual LeRobot SO-101 setup.
+- **Noise injection (DART-style)**: the robot executes expert action +
+  smoothly-varying noise, but the clean expert action is the label, so the data
+  shows how to recover from small errors. 0.02 rad made 3 of 23 test demos
+  fail (open-loop expert can't correct), so we use **0.01 rad**. Failed demos
+  are discarded.
+- **Seeds**: demos use seeds 100000+, validation rollouts 50000+, final
+  evaluation 0–49, so the final evaluation uses cube poses never seen in training.
+- **Episodes are 200 steps (10 s)**; the expert finishes at 8 s and then holds
+  still, so the policy also learns to stop.
