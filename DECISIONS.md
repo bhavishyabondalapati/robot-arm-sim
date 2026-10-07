@@ -29,3 +29,23 @@ Choices made while building this project, and why. Newest at the bottom.
   spots: the straight-on view had the arm hiding the cube.
 - **Control at 20 Hz** (10 physics steps of 5 ms), absolute joint-position
   targets — the same interface as the real arm's servos in LeRobot.
+
+## Inverse kinematics
+- **Damped least squares (DLS), written from scratch** using MuJoCo's
+  `mj_jacSite` Jacobian, instead of a library (e.g. `mink`, `ikpy`). It is
+  ~100 lines, has no extra dependency, and is the thing worth understanding.
+- **Target frame: the `gripperframe` site** at the fingertips. Its +x axis is
+  the approach direction and +z the jaw-closing direction, so a top-down grasp
+  is "site x = world −z".
+- **The SO-101 has only 5 arm joints**, so it cannot hit an arbitrary 6-D pose.
+  Top-down grasps still work because the arm is planar: pan picks the plane,
+  lift/elbow/wrist_flex set position + pitch, wrist_roll sets the jaw yaw.
+- **Orientation weight 0.25** (1 rad of rotation error counts like 25 cm of
+  position error... scaled down), damping 0.02, max 0.2 rad per iteration.
+- **Joint limits**: clip after each step, and drop joints that are pinned at a
+  limit and being pushed outward ("active set"), then re-solve.
+- **Random restarts (default 20, only used if the first attempt fails).** On 500
+  random reachable targets, 8 restarts solved 492 (position) / 484 (pose);
+  20 restarts solved 499 / 500. All misses were targets *behind* the robot,
+  which only a narrow range of folded arm poses can reach. The pick-and-place
+  workspace is in front, where the first attempt almost always succeeds.
