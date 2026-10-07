@@ -40,8 +40,9 @@ Choices made while building this project, and why. Newest at the bottom.
 - **The SO-101 has only 5 arm joints**, so it cannot hit an arbitrary 6-D pose.
   Top-down grasps still work because the arm is planar: pan picks the plane,
   lift/elbow/wrist_flex set position + pitch, wrist_roll sets the jaw yaw.
-- **Orientation weight 0.25** (1 rad of rotation error counts like 25 cm of
-  position error... scaled down), damping 0.02, max 0.2 rad per iteration.
+- **Orientation weight 0.25**: 1 rad of orientation error is weighted the same
+  as 0.25 m of position error. Damping 0.02, at most 0.2 rad of joint change
+  per iteration.
 - **Joint limits**: clip after each step, and drop joints that are pinned at a
   limit and being pushed outward ("active set"), then re-solve.
 - **Random restarts (default 20, only used if the first attempt fails).** On 500
@@ -49,3 +50,18 @@ Choices made while building this project, and why. Newest at the bottom.
   20 restarts solved 499 / 500. All misses were targets *behind* the robot,
   which only a narrow range of folded arm poses can reach. The pick-and-place
   workspace is in front, where the first attempt almost always succeeds.
+
+## Scripted pick-and-place
+- **Waypoints in Cartesian space -> IK -> smooth joint-space motion.** 8
+  waypoints (above cube, down, close, lift, carry, lower, open, back off), each
+  solved with IK warm-started from the previous one, connected with a
+  minimum-jerk curve. Joint-space interpolation (rather than a straight
+  Cartesian line) is needed for the carry move: a straight line from the cube
+  to the target cuts through the inner hole of the reachable workspace.
+- **Jaw yaw**: a cube looks the same every 90°, so we pick the face direction
+  closest to the arm's radial direction (least wrist roll).
+- **Gripper closes to −0.17 rad** (past the cube), so the force-limited servo
+  keeps squeezing.
+- **Open-loop expert using the true cube pose.** It does not see pixels and does
+  not react to slips. Result: **100/100** successes on seeds 0–99 (8 s per
+  episode). It is the upper bound the learned policy is compared against.
