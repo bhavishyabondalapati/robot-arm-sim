@@ -127,6 +127,7 @@ pytest
 ```
 robot-arm-sim/
 ├── DECISIONS.md               Design decision log
+├── LICENSE                    MIT license
 ├── requirements.txt           Pinned dependencies
 ├── pyproject.toml             pytest configuration
 ├── assets/so101/
@@ -165,3 +166,9 @@ See [DECISIONS.md](DECISIONS.md) for every choice and the measurements behind it
   - **Timing**: inference, camera capture, and servo bus latency must fit within the 50 ms control period.
   - **Safety**: joint-velocity limits, workspace bounds, and an emergency stop.
   - **Grasp physics**: real friction, mass, and soft jaw contact differ from simulation.
+
+## License
+
+Code is released under the MIT License; see [LICENSE](LICENSE).
+
+The SO-101 model and meshes in `assets/so101/` come from [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie) and stay under their own Apache-2.0 license (`assets/so101/LICENSE`); the MIT License does not cover them.

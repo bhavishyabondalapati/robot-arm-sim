@@ -5,3 +5,7 @@ imageio==2.38.0
 imageio-ffmpeg==0.6.0
 matplotlib==3.11.2
 pytest==9.1.1
+
+# Security floors for transitive dependencies (known vulnerabilities below these versions)
+pillow>=13.0.0
+filelock>=4.2.1
